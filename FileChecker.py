@@ -39,6 +39,9 @@ def analyze_file():
     open_area.insert("end", f"File Size:\t{file_size}\n")
     open_area.insert("end", f"File Created:\t{file_created}\n")
     open_area.insert("end", f"File Modified:\t{file_modified}\n")
+    #hash = original_hash()
+
+
 
 #Function to calculate the hash value and returning the hash value
 def hash_file(filepath):
@@ -47,6 +50,32 @@ def hash_file(filepath):
         while chunk := f.read(4096):
             file_hash.update(chunk)
     return file_hash.hexdigest()
+
+#Function to save the original hash value to a file
+def saveHash():
+    filename="hash.txt"
+    #Checking if the file exist
+    if os.path.isfile(filename):
+        with open(filename, "a") as f: # appending the existig text if the file exist
+            file_hash = hash_file(selected_file)
+            f.write(f"{selected_file}\t{file_hash}\n")
+    else:                                             #if it does not , it creates a new file
+        with open(filename, "x") as f:
+            file_hash = hash_file(selected_file)
+            f.write(f"{selected_file}\t{file_hash}\n")
+
+
+#A function for retrieving the hash value from the file and returning the original hash value
+def original_hash():
+    with open("hash.txt") as f:
+       content= f.read()
+       for line in content.split('\n'):
+           if line.startswith(selected_file + '\t'):
+               hash_value=line.split('\t', 1)[1]
+               tk.Label(Right_frame, text=f"{hash_value}", bg="grey", justify="left").pack(pady=0.2, padx=10, expand=False)
+               return hash_value
+
+
 #For the generate button , function to be used to write the hash value to the text area
 def Generate():
     global selected_file
@@ -55,14 +84,18 @@ def Generate():
 
     hashvalue = hash_file(selected_file)
     open_area.insert("end", f"\nSHA-256 Hash:\n{hashvalue}\n")
-    tk.Label.destroy(Right_frame)
-    #tk.Label(Right_frame, text=f"Hash:\nGenerated)", bg="grey", justify="left").pack(pady=5)
-    return hashvalue
+    saveHash()
+    hash= original_hash()
+   # tk.Label(Right_frame, text=f"{hash}", bg="grey", justify="left").pack(pady=0.2,padx=10,expand=False)
+    if hash==hashvalue:
+        open_area.insert("end","The hash values are the same , the file has not been corrupted")
+    else:
+        open_area.insert("end","The hash values aren't the same , the file has not been corrupted")
 
 ####Doing the Gui
 root = tk.Tk() #Creating the window
 root.title("File Integrity Checker") #Setting the title
-root.geometry("700x400") #Setting the size
+root.geometry("7000x4000") #Setting the size
 
 #We will use a frame to set all our widgets
 Top_frame = tk.Frame(root,bg='grey',height=50)
@@ -73,8 +106,9 @@ left_frame = tk.Frame(root,bg='grey',height=150)
 left_frame.pack(side="left",fill="y")
 
 #Right
-Right_frame=tk.Frame(root,bg='grey',height=150)
-Right_frame.pack(side="right",fill="y")
+Right_frame=tk.Frame(root,bg='grey',height=1500,width=450)
+Right_frame.pack_propagate(False)
+Right_frame.pack(side="right",fill="none")
 
 #Bottom
 bottom_frame = tk.Frame(root, bg="grey", height=30)
@@ -100,7 +134,7 @@ open_area.pack(expand=True, fill="both", padx=10, pady=10)
 
 #Right side (maybe for info or actions)
 tk.Label(Right_frame, text="File Details", bg="grey", font=("Arial", 10, "bold")).pack(pady=5)
-tk.Label(Right_frame, text=f"Hash:\n(Not Generated Yet)", bg="grey", justify="left").pack(pady=5)
+tk.Label(Right_frame, text=f"Hash:\n", bg="grey", justify="left").pack(pady=5)
 
 #Bottom status bar
 status_label = tk.Label(bottom_frame, text="Ready", bg="#2c3e50", fg="white")
